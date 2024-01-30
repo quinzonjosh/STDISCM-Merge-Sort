@@ -1,13 +1,44 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
         // TODO: Seed your randomizer
+        final int SEED = 3001;
+        Random random = new Random(SEED);
+        int nRandNum = random.nextInt(1000);
 
         // TODO: Get array size and thread count from user
+        final int nArraySize;
+        final int nThreadCount;
+        final int DEFAULT_THREAD_COUNT = 1;
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Input array size:");
+        nArraySize = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.print("Input thread count:");
+        String input = scanner.nextLine();
+
+        if (input.isEmpty()) {
+            nThreadCount = DEFAULT_THREAD_COUNT;
+            System.out.println("No input entered. Using default thread count value: " + DEFAULT_THREAD_COUNT);
+        } else {
+            nThreadCount = Integer.parseInt(input);
+        }
+
+        scanner.close();
 
         // TODO: Generate a random array of given size
+        // Initialize array
+        int[] arr = new int[nArraySize];
+        for(int i=1; i<=nArraySize; i++) {
+            arr[i - 1] = i;
+        }
+        shuffleArray(arr, random);
 
         // TODO: Call the generate_intervals method to generate the merge
         // sequence
@@ -18,6 +49,19 @@ public class Main {
         // implement the concurrent version. Good luck :)
 
     }
+
+    // Fisher-Yates shuffling algo
+    // from: https://www.geeksforgeeks.org/shuffle-a-given-array-using-fisher-yates-shuffle-algorithm/
+    public static void shuffleArray(int[] arr, Random random) {
+        for (int i = 0; i < arr.length; i++) {
+            int j = random.nextInt(i + 1);
+
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+    }
+
 
     /*
     This function generates all the intervals for merge sort iteratively, given
@@ -98,31 +142,5 @@ public class Main {
                 r_ptr++;
             }
         }
-    }
-}
-
-class Interval {
-    private int start;
-    private int end;
-
-    public Interval(int start, int end) {
-        this.start = start;
-        this.end = end;
-    }
-
-    public int getStart() {
-        return start;
-    }
-
-    public void setStart(int start) {
-        this.start = start;
-    }
-
-    public int getEnd() {
-        return end;
-    }
-
-    public void setEnd(int end) {
-        this.end = end;
     }
 }
