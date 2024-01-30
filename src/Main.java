@@ -45,13 +45,22 @@ public class Main {
         // sequence
         List<Interval> intervals = generate_intervals(0, nArraySize - 1);
 
+        // Timer before sorting begins...
+        final long startTime = System.currentTimeMillis();
+
         // TODO: Call merge on each interval in sequence
         for (Interval interval : intervals) {
             merge(arr, interval.getStart(), interval.getEnd());
         }
 
+        // ...ends after the final merge.
+        final long endTime = System.currentTimeMillis();
+
         // Print the sorted array
         System.out.println(" Sorted  array: " + Arrays.toString(arr));
+
+        // Print the execution time
+        System.out.println("Execution time: " + (endTime - startTime) + "ms");
 
         // Once you get the single-threaded version to work, it's time to
         // implement the concurrent version. Good luck :)
