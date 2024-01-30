@@ -36,10 +36,12 @@ public class Main {
             arr[i - 1] = i;
         }
         System.out.println("Original array: " + Arrays.toString(arr));
+        int[] originalArr = Arrays.copyOf(arr, arr.length);  // DEBUG
 
         // Shuffle array
         shuffleArray(arr, random);
         System.out.println("Shuffled array: " + Arrays.toString(arr));
+        int[] shuffledArr = Arrays.copyOf(arr, arr.length);  // DEBUG
 
         // TODO: Call the generate_intervals method to generate the merge
         // sequence
@@ -65,6 +67,11 @@ public class Main {
         // Once you get the single-threaded version to work, it's time to
         // implement the concurrent version. Good luck :)
 
+
+        // --- DEBUG ---
+        System.out.println(Arrays.equals(originalArr, shuffledArr));  // Should be false if the array was shuffled
+        System.out.println(Arrays.equals(originalArr, arr));  // Should be true if the array is sorted correctly (matches the original array)
+        System.out.println(Arrays.equals(shuffledArr, arr));  // Should be false if the array was sorted after being shuffled
     }
 
     // Fisher-Yates shuffling algo
