@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -16,11 +13,11 @@ public class Main {
         final int DEFAULT_THREAD_COUNT = 1;
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Input array size:");
+        System.out.print("Input array size: ");
         nArraySize = scanner.nextInt();
-        scanner.nextLine();
+        scanner.nextLine();  // Consume the newline since nextInt only captures the integer
 
-        System.out.print("Input thread count:");
+        System.out.print("Input thread count: ");
         String input = scanner.nextLine();
 
         if (input.isEmpty()) {
@@ -38,12 +35,23 @@ public class Main {
         for(int i=1; i<=nArraySize; i++) {
             arr[i - 1] = i;
         }
+        System.out.println("Original array: " + Arrays.toString(arr));
+
+        // Shuffle array
         shuffleArray(arr, random);
+        System.out.println("Shuffled array: " + Arrays.toString(arr));
 
         // TODO: Call the generate_intervals method to generate the merge
         // sequence
+        List<Interval> intervals = generate_intervals(0, nArraySize - 1);
 
         // TODO: Call merge on each interval in sequence
+        for (Interval interval : intervals) {
+            merge(arr, interval.getStart(), interval.getEnd());
+        }
+
+        // Print the sorted array
+        System.out.println(" Sorted  array: " + Arrays.toString(arr));
 
         // Once you get the single-threaded version to work, it's time to
         // implement the concurrent version. Good luck :)
