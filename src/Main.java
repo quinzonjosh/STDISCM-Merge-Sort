@@ -1,4 +1,6 @@
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Main {
     public static void main(String[] args) {
@@ -51,9 +53,32 @@ public class Main {
         final long startTime = System.currentTimeMillis();
 
         // TODO: Call merge on each interval in sequence
-        for (Interval interval : intervals) {
-            merge(arr, interval.getStart(), interval.getEnd());
+        Pool threadPool = new Pool(arr, intervals, nThreadCount);
+
+        int counter;
+        while (!intervals.isEmpty()){
+            for (counter = 0; counter < nThreadCount; counter++){
+                threadPool.executeMerging(counter);
+            }
         }
+
+        threadPool.shutdown();
+
+//        Lock lock = new ReentrantLock();
+//        Thread thread = new Thread(new MergeTask(arr, intervals, lock));
+//        thread.start();
+
+
+
+//        try {
+//            thread.join();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+
+//        for (Interval interval : intervals) {
+//            merge(arr, interval.getStart(), interval.getEnd());
+//        }
 
         // ...ends after the final merge.
         final long endTime = System.currentTimeMillis();
@@ -73,6 +98,100 @@ public class Main {
         System.out.println(Arrays.equals(originalArr, arr));  // Should be true if the array is sorted correctly (matches the original array)
         System.out.println(Arrays.equals(shuffledArr, arr));  // Should be false if the array was sorted after being shuffled
     }
+
+    static class Pool{
+        private final Lock lock;
+
+        private final Thread[] threads;
+
+        private final boolean[] flags;
+
+        private final int[] array;
+        private final List<Interval> intervals;
+
+
+        Pool(int[] array, List<Interval> intervals, int nThreadCount){
+            this.lock = new ReentrantLock();
+            this.threads = new Thread[nThreadCount];
+            this.flags = new boolean[nThreadCount];
+            this.intervals = intervals;
+            this.array = array;
+        }
+
+
+        public void executeMerging(int index){
+            Thread thread = new Thread(new MergeTask(index, this.array, this.intervals, this.lock, this));
+            threads[index] = thread;
+            thread.start();
+
+        }
+
+        public boolean isOccupied(int index){
+            return flags[index];
+        }
+
+        public void setOccupied(int index, boolean flag){
+            flags[index] = flag;
+        }
+
+        public void shutdown(){
+            // WAIT FOR ALL THREADS TO FINISH
+            for (Thread thread : threads) {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+
+
+
+    }
+
+    static class MergeTask implements Runnable{
+
+        private final int[] array;
+        private final List<Interval> intervals;
+
+        private final Lock lock;
+
+        private final Pool pool;
+
+        private final int id;
+
+        MergeTask(int id, int[] array, List<Interval> intervals, Lock lock, Pool pool){
+            this.array = array;
+            this.intervals = intervals;
+            this.lock = lock;
+            this.pool = pool;
+            this.id = id;
+        }
+
+
+        @Override
+        public void run() {
+
+            if (!intervals.isEmpty()){
+                lock.lock();
+                try {
+                    pool.setOccupied(id, true);
+                    Interval interval = intervals.remove(0);
+                    merge(array, interval.getStart(), interval.getEnd());
+                    pool.setOccupied(id, false);
+
+                } finally {
+
+                    lock.unlock();
+                }
+            }
+
+
+        }
+    }
+
 
     // Fisher-Yates shuffling algo
     // from: https://www.geeksforgeeks.org/shuffle-a-given-array-using-fisher-yates-shuffle-algorithm/
