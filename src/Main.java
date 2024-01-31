@@ -55,11 +55,8 @@ public class Main {
         // TODO: Call merge on each interval in sequence
         Pool threadPool = new Pool(arr, intervals, nThreadCount);
 
-        int counter;
-        while (!intervals.isEmpty()){
-            for (counter = 0; counter < nThreadCount; counter++){
-                threadPool.executeMerging(counter);
-            }
+        for (int counter = 0; counter < nThreadCount; counter++){
+            threadPool.executeMerging(counter);
         }
 
         threadPool.shutdown();
@@ -109,6 +106,8 @@ public class Main {
         private final int[] array;
         private final List<Interval> intervals;
 
+        private int index = 0;
+
 
         Pool(int[] array, List<Interval> intervals, int nThreadCount){
             this.lock = new ReentrantLock();
@@ -132,6 +131,14 @@ public class Main {
 
         public void setOccupied(int index, boolean flag){
             flags[index] = flag;
+        }
+
+        public void incrementIndex(){
+            index++;
+        }
+
+        public int getIndex() {
+            return index;
         }
 
         public void shutdown(){
@@ -162,6 +169,7 @@ public class Main {
 
         private final int id;
 
+
         MergeTask(int id, int[] array, List<Interval> intervals, Lock lock, Pool pool){
             this.array = array;
             this.intervals = intervals;
@@ -174,21 +182,23 @@ public class Main {
         @Override
         public void run() {
 
-            if (!intervals.isEmpty()){
-                lock.lock();
-                try {
-                    pool.setOccupied(id, true);
-                    Interval interval = intervals.remove(0);
-                    merge(array, interval.getStart(), interval.getEnd());
-                    pool.setOccupied(id, false);
+            while (pool.getIndex() < intervals.size()){
+                if (!pool.isOccupied(id)){
+                    lock.lock();
+                    try {
+                        pool.setOccupied(id, true);
+                        Interval interval = intervals.get(pool.getIndex());
+                        pool.incrementIndex();
 
-                } finally {
+                        merge(array, interval.getStart(), interval.getEnd());
+                        pool.setOccupied(id, false);
 
-                    lock.unlock();
+                    } finally {
+
+                        lock.unlock();
+                    }
                 }
             }
-
-
         }
     }
 
