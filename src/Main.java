@@ -184,16 +184,18 @@ public class Main {
 
             while (pool.getIndex() < intervals.size()){
                 if (!pool.isOccupied(id)){
-                    pool.setOccupied(id, true);
+
                     lock.lock();
                     try {
+                        pool.setOccupied(id, true);
                         Interval interval = intervals.get(pool.getIndex());
                         pool.incrementIndex();
                         merge(array, interval.getStart(), interval.getEnd());
+                        pool.setOccupied(id, false);
                     } finally {
                         lock.unlock();
                     }
-                    pool.setOccupied(id, false);
+
                 }
             }
         }
