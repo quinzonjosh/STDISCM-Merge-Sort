@@ -49,17 +49,45 @@ public class Main {
         // sequence
         List<Interval> intervals = generate_intervals(0, nArraySize - 1);
 
+        for(Interval interval : intervals){
+            System.out.println("(" + interval.getStart() + ", " + interval.getEnd() +")");
+        }
+//        System.out.println(Arrays.toString(intervals.toArray()));
+
+        ArrayList<Thread> threads = new ArrayList<>();
+        Lock lock = new ReentrantLock();
+        boolean[] flags = new boolean[nThreadCount];
+
         // Timer before sorting begins...
         final long startTime = System.currentTimeMillis();
 
         // TODO: Call merge on each interval in sequence
-        Pool threadPool = new Pool(arr, intervals, nThreadCount);
-
         for (int counter = 0; counter < nThreadCount; counter++){
-            threadPool.executeMerging(counter);
+            Thread thread = new Thread(new MergeTask(arr, intervals, lock));
+            threads.add(thread);
+            thread.start();
         }
 
-        threadPool.shutdown();
+
+        for (Thread thread : threads){
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+
+
+
+//        Pool threadPool = new Pool(arr, intervals, nThreadCount);
+//
+//        for (int counter = 0; counter < nThreadCount; counter++){
+//            threadPool.executeMerging(counter);
+//        }
+//
+//        threadPool.shutdown();
 
 //        Lock lock = new ReentrantLock();
 //        Thread thread = new Thread(new MergeTask(arr, intervals, lock));
@@ -67,11 +95,7 @@ public class Main {
 
 
 
-//        try {
-//            thread.join();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+
 
 //        for (Interval interval : intervals) {
 //            merge(arr, interval.getStart(), interval.getEnd());
@@ -96,67 +120,67 @@ public class Main {
         System.out.println(Arrays.equals(shuffledArr, arr));  // Should be false if the array was sorted after being shuffled
     }
 
-    static class Pool{
-        private final Lock lock;
-
-        private final Thread[] threads;
-
-        private final boolean[] flags;
-
-        private final int[] array;
-        private final List<Interval> intervals;
-
-        private int index = 0;
-
-
-        Pool(int[] array, List<Interval> intervals, int nThreadCount){
-            this.lock = new ReentrantLock();
-            this.threads = new Thread[nThreadCount];
-            this.flags = new boolean[nThreadCount];
-            this.intervals = intervals;
-            this.array = array;
-        }
-
-
-        public void executeMerging(int index){
-            Thread thread = new Thread(new MergeTask(index, this.array, this.intervals, this.lock, this));
-            threads[index] = thread;
-            thread.start();
-
-        }
-
-        public boolean isOccupied(int index){
-            return flags[index];
-        }
-
-        public void setOccupied(int index, boolean flag){
-            flags[index] = flag;
-        }
-
-        public void incrementIndex(){
-            index++;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public void shutdown(){
-            // WAIT FOR ALL THREADS TO FINISH
-            for (Thread thread : threads) {
-                try {
-                    thread.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-
-
-
-
-    }
+//    static class Pool{
+//        private final Lock lock;
+//
+//        private final Thread[] threads;
+//
+//        private final boolean[] flags;
+//
+//        private final int[] array;
+//        private final List<Interval> intervals;
+//
+//        private int index = 0;
+//
+//
+//        Pool(int[] array, List<Interval> intervals, int nThreadCount){
+//            this.lock = new ReentrantLock();
+//            this.threads = new Thread[nThreadCount];
+//            this.flags = new boolean[nThreadCount];
+//            this.intervals = intervals;
+//            this.array = array;
+//        }
+//
+//
+//        public void executeMerging(int index){
+//            Thread thread = new Thread(new MergeTask(index, this.array, this.intervals, this.lock, this));
+//            threads[index] = thread;
+//            thread.start();
+//
+//        }
+//
+//        public boolean isOccupied(int index){
+//            return flags[index];
+//        }
+//
+//        public void setOccupied(int index, boolean flag){
+//            flags[index] = flag;
+//        }
+//
+//        public void incrementIndex(){
+//            index++;
+//        }
+//
+//        public int getIndex() {
+//            return index;
+//        }
+//
+//        public void shutdown(){
+//            // WAIT FOR ALL THREADS TO FINISH
+//            for (Thread thread : threads) {
+//                try {
+//                    thread.join();
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//
+//
+//
+//
+//
+//    }
 
     static class MergeTask implements Runnable{
 
@@ -165,39 +189,50 @@ public class Main {
 
         private final Lock lock;
 
-        private final Pool pool;
+//        private final Pool pool;
 
-        private final int id;
+//        private final int id;
 
 
-        MergeTask(int id, int[] array, List<Interval> intervals, Lock lock, Pool pool){
+        MergeTask(int[] array, List<Interval> intervals, Lock lock){
             this.array = array;
             this.intervals = intervals;
             this.lock = lock;
-            this.pool = pool;
-            this.id = id;
+//            this.pool = pool;
+//            this.id = id;
         }
 
 
         @Override
         public void run() {
 
-            while (pool.getIndex() < intervals.size()){
-                if (!pool.isOccupied(id)){
+            while (!intervals.isEmpty()){
+                Interval available = null;
+                for (Interval interval : intervals){
+                    intervals.subList()
 
-                    lock.lock();
-                    try {
-                        pool.setOccupied(id, true);
-                        Interval interval = intervals.get(pool.getIndex());
-                        pool.incrementIndex();
-                        merge(array, interval.getStart(), interval.getEnd());
-                        pool.setOccupied(id, false);
-                    } finally {
-                        lock.unlock();
-                    }
 
                 }
+
             }
+
+
+
+//            while (pool.getIndex() < intervals.size()){
+//                if (!pool.isOccupied(id)){
+//                    lock.lock();
+//                    try {
+//                        pool.setOccupied(id, true);
+//                        Interval interval = intervals.get(pool.getIndex());
+//                        pool.incrementIndex();
+//                        merge(array, interval.getStart(), interval.getEnd());
+//                        pool.setOccupied(id, false);
+//                    } finally {
+//                        lock.unlock();
+//                    }
+//
+//                }
+//            }
         }
     }
 

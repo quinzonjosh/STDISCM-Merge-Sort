@@ -2,6 +2,8 @@ public class Interval {
     private int start;
     private int end;
 
+    private boolean done = false;
+
     public Interval(int start, int end) {
         this.start = start;
         this.end = end;
@@ -21,5 +23,14 @@ public class Interval {
 
     public void setEnd(int end) {
         this.end = end;
+    }
+
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public void setDone(boolean done) {
+        this.done = done;
     }
 }
