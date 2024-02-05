@@ -5,6 +5,8 @@ import java.util.concurrent.TimeUnit;
 
 public class Main2 {
     public static void main(String[] args) {
+        long startTimeSingle, endTimeSingle;
+
         // TODO: Seed your randomizer
         long seed = 12345; // Set a constant seed value
         Random random = new Random(seed);
@@ -33,65 +35,82 @@ public class Main2 {
         // TODO: Generate a random array of given size
         int[] array = generateRandomArray(nArraySize, random);
 
-        // TODO: Call the generate_intervals method to generate the merge sequence
-        List<Interval> intervals = generate_intervals(0, array.length - 1);
-        Set<Interval> done = new HashSet<>();
+        for(int z=0; z<5; z++) {
+
+            // TODO: Call the generate_intervals method to generate the merge sequence
+            List<Interval> intervals = generate_intervals(0, array.length - 1);
+            Set<Interval> done = new HashSet<>();
 //        for (Interval interval : intervals) {
 //            System.out.println(interval.getStart() + "," + interval.getEnd());
 //        }
 
 
-        long startTime, endTime;
-
-//        // TODO: Call merge on each interval in sequence
-        ExecutorService executor = Executors.newFixedThreadPool(nThreadCount);
-        startTime = System.currentTimeMillis();
-
-        int counter = 0;
-        while (done.size() < intervals.size()){
-            if (counter >= intervals.size()){
-                counter = 0;
+            long startTime, endTime;
+            // TODO: Call merge on each interval in sequence (single-threaded version)
+            int[] arraySingleThreaded = Arrays.copyOf(array, array.length);
+            startTimeSingle = System.currentTimeMillis();
+            for (Interval interval : intervals) {
+                merge(arraySingleThreaded, (int) interval.getStart(), (int) interval.getEnd());
             }
-            else {
-                Interval temp = intervals.get(counter);
+            endTimeSingle = System.currentTimeMillis();
+            long durationSingleThreaded = endTimeSingle - startTimeSingle;
+            System.out.println("Single-threaded merge sort took " + durationSingleThreaded + " ms.");
 
-                //divide the pair into two (start, mid) (mid + 1, end)
-                List<Interval> subIntervals = generate_intervals((int)temp.getStart(), (int)temp.getEnd());
-                subIntervals.remove(subIntervals.size() - 1);
-
-
-                if ((int) temp.getStart() == (int) temp.getEnd()){
-                    executor.submit(() -> merge(array, (int)temp.getStart(), (int)temp.getEnd()));
-                    done.add(temp);
-                }
-                else if (done.containsAll(subIntervals)){
-                    executor.submit(() -> merge(array, (int)temp.getStart(), (int)temp.getEnd()));
-                    done.add(temp);
-                }
-
-                counter++;
-
+            // Sanity check (Single-threaded)
+            if (isSorted(arraySingleThreaded)) {
+                System.out.println("Singlethreaded Array is sorted.");
+            } else {
+                System.out.println("Singlethreaded Array is not sorted.");
             }
 
+            // TODO: Call merge on each interval in sequence
+            ExecutorService executor = Executors.newFixedThreadPool(nThreadCount);
+            startTime = System.currentTimeMillis();
 
-        }
+            int counter = 0;
+            while (done.size() < intervals.size()) {
+                if (counter >= intervals.size()) {
+                    counter = 0;
+                } else {
+                    Interval temp = intervals.get(counter);
 
-        executor.shutdown();
-        try {
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        endTime = System.currentTimeMillis();
-        long durationConcurrent = endTime - startTime;
+                    //divide the pair into two (start, mid) (mid + 1, end)
+                    List<Interval> subIntervals = generate_intervals((int) temp.getStart(), (int) temp.getEnd());
+                    subIntervals.remove(subIntervals.size() - 1);
+
+
+                    if ((int) temp.getStart() == (int) temp.getEnd()) {
+                        executor.submit(() -> merge(array, (int) temp.getStart(), (int) temp.getEnd()));
+                        done.add(temp);
+                    } else if (done.containsAll(subIntervals)) {
+                        executor.submit(() -> merge(array, (int) temp.getStart(), (int) temp.getEnd()));
+                        done.add(temp);
+                    }
+
+                    counter++;
+
+                }
+
+
+            }
+
+            executor.shutdown();
+            try {
+                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            endTime = System.currentTimeMillis();
+            long durationConcurrent = endTime - startTime;
 
 //        System.out.println(" Sorted  array: " + Arrays.toString(array));
-        System.out.println("Concurrent merge sort took " + durationConcurrent + " ms.");
-        // Sanity check
-        if (isSorted(array)) {
-            System.out.println("Array is sorted.");
-        } else {
-            System.out.println("Array is not sorted.");
+            System.out.println("Concurrent merge sort took " + durationConcurrent + " ms.");
+            // Sanity check
+            if (isSorted(array)) {
+                System.out.println("Array is sorted.");
+            } else {
+                System.out.println("Array is not sorted.");
+            }
         }
 }
 
