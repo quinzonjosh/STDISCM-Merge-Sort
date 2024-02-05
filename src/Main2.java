@@ -35,6 +35,10 @@ public class Main2 {
 
         // TODO: Call the generate_intervals method to generate the merge sequence
         List<Interval> intervals = generate_intervals(0, array.length - 1);
+        // DEBUG: print intervals
+//        for (Interval interval : intervals) {
+//            System.out.println(interval.getStart() + " " + interval.getEnd());
+//        }
 
         // Call merge on each interval in sequence (single-threaded version)
         int[] arraySingleThreaded = Arrays.copyOf(array, array.length);
@@ -60,6 +64,13 @@ public class Main2 {
 
         // Map to keep track of futures representing sorted intervals
         Map<Interval, Future<?>> futures = new HashMap<>();
+
+        // DEBUG: check if array is not sorted before multithreading
+//        if (isSorted(arrayMultiThreaded)) {
+//            System.out.println("Multithreaded Array is sorted.");
+//        } else {
+//            System.out.println("Multithreaded Array is not sorted.");
+//        }
 
         startTimeMulti = System.currentTimeMillis();
 
