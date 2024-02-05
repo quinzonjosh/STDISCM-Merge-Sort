@@ -3,7 +3,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class Main {
+public class Main2 {
     public static void main(String[] args) {
         long startTimeSingle, endTimeSingle;
 
@@ -24,12 +24,12 @@ public class Main {
         System.out.print("Input thread count: ");
         String input = scanner.nextLine();
 
-        if (input.isEmpty()) {
-            nThreadCount = DEFAULT_THREAD_COUNT;
-            System.out.println("No input entered. Using default thread count value: " + DEFAULT_THREAD_COUNT);
-        } else {
-            nThreadCount = Integer.parseInt(input);
-        }
+            if (input.isEmpty()) {
+                nThreadCount = DEFAULT_THREAD_COUNT;
+                System.out.println("No input entered. Using default thread count value: " + DEFAULT_THREAD_COUNT);
+            } else {
+                nThreadCount = Integer.parseInt(input);
+            }
         scanner.close();
 
         // TODO: Generate a random array of given size
@@ -112,14 +112,14 @@ public class Main {
                 System.out.println("Array is not sorted.");
             }
         }
-    }
+}
 
 
 
 
 
     /*
-    This function generates all the intervals for merge sort iteratively, given
+    This function generates all the intervals for merge sort iteratively, given 
     the range of indices to sort. Algorithm runs in O(n).
 
     Parameters:
@@ -188,7 +188,7 @@ public class Main {
                 array[i] = right[r_ptr];
                 r_ptr++;
 
-                // no more elements on right half or left element comes first
+            // no more elements on right half or left element comes first
             } else if(r_ptr == e - m || left[l_ptr] <= right[r_ptr]) {
                 array[i] = left[l_ptr];
                 l_ptr++;

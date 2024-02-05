@@ -1,25 +1,40 @@
-public class Interval {
-    private int start;
-    private int end;
 
-    public Interval(int start, int end) {
+import java.util.*;
+
+public class Interval<S, E> {
+    private S start;
+    private E end;
+
+    public Interval(S start, E end) {
         this.start = start;
         this.end = end;
     }
 
-    public int getStart() {
+    public S getStart() {
         return start;
     }
 
-    public void setStart(int start) {
-        this.start = start;
-    }
-
-    public int getEnd() {
+    public E getEnd() {
         return end;
     }
 
-    public void setEnd(int end) {
-        this.end = end;
+    @Override
+    public boolean equals(Object o) {
+        try{
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Interval<?, ?> that = (Interval<?, ?>) o;
+            return getStart().equals(that.getStart()) &&
+                    getEnd().equals(that.getEnd());
+        }catch (Exception e){
+            return false;
+        }
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getStart(), getEnd());
+    }
+
+
 }
