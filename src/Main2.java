@@ -1,13 +1,10 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class Main2 {
     public static void main(String[] args) {
+        long startTimeSingle, endTimeSingle, startTimeMulti, endTimeMulti;
+
         // TODO: Seed your randomizer
         long seed = 12345; // Set a constant seed value
         Random random = new Random(seed);
@@ -40,35 +37,80 @@ public class Main2 {
         List<Interval> intervals = generate_intervals(0, array.length - 1);
 
         // Call merge on each interval in sequence (single-threaded version)
-        long startTime = System.currentTimeMillis();
+        int[] arraySingleThreaded = Arrays.copyOf(array, array.length);
+        startTimeSingle = System.currentTimeMillis();
         for (Interval interval : intervals) {
-            merge(array, interval.getStart(), interval.getEnd());
+            merge(arraySingleThreaded, interval.getStart(), interval.getEnd());
         }
-        long endTime = System.currentTimeMillis();
-        long durationSingleThreaded = endTime - startTime;
+        endTimeSingle = System.currentTimeMillis();
+        long durationSingleThreaded = endTimeSingle - startTimeSingle;
         System.out.println("Single-threaded merge sort took " + durationSingleThreaded + " ms.");
 
-        // TODO: Call merge on each interval in sequence
-        ExecutorService executor = Executors.newFixedThreadPool(nThreadCount);
-        startTime = System.currentTimeMillis();
-            for (Interval interval : intervals) {
-                executor.submit(() -> merge(array, interval.getStart(), interval.getEnd()));
-            }
-            executor.shutdown();
-            try {
-                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        endTime = System.currentTimeMillis();
-        long durationConcurrent = endTime - startTime;
-        System.out.println("Concurrent merge sort took " + durationConcurrent + " ms.");
-        
-        // Sanity check
-        if (isSorted(array)) {
-            System.out.println("Array is sorted.");
+        // Sanity check (Single-threaded)
+        if (isSorted(arraySingleThreaded)) {
+            System.out.println("Singlethreaded Array is sorted.");
         } else {
-            System.out.println("Array is not sorted.");
+            System.out.println("Singlethreaded Array is not sorted.");
+        }
+
+        // TODO: Call merge on each interval in sequence
+        int[] arrayMultiThreaded = Arrays.copyOf(array, array.length);
+        // Executor service for concurrency
+        ExecutorService executor = Executors.newFixedThreadPool(nThreadCount);
+
+        // Map to keep track of futures representing sorted intervals
+        Map<Interval, Future<?>> futures = new HashMap<>();
+
+        startTimeMulti = System.currentTimeMillis();
+
+        // Submit initial sorting tasks for each interval
+        for (Interval interval : intervals) {
+            Future<?> future = executor.submit(() -> {
+                try {
+                    // If the interval is more than one element, wait for the left and right halves to be sorted
+                    if (interval.getStart() < interval.getEnd()) {
+                        int middle = interval.getStart() + (interval.getEnd() - interval.getStart()) / 2;
+                        Interval left = new Interval(interval.getStart(), middle);
+                        Interval right = new Interval(middle + 1, interval.getEnd());
+                        Future<?> leftFuture = futures.get(left);
+                        Future<?> rightFuture = futures.get(right);
+
+                        if (leftFuture != null) leftFuture.get(); // wait for left half to be sorted
+                        if (rightFuture != null) rightFuture.get(); // wait for right half to be sorted
+                    }
+
+                    // Perform the merge on this interval
+                    merge(arrayMultiThreaded, interval.getStart(), interval.getEnd());
+                } catch (InterruptedException | ExecutionException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+            });
+
+            // Store the future
+            futures.put(interval, future);
+        }
+
+        // Shut down the executor service and await termination of all tasks
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+
+        endTimeMulti = System.currentTimeMillis();
+        long durationMultiThreaded = endTimeMulti - startTimeMulti;
+        System.out.println("Multi-threaded merge sort took " + durationMultiThreaded + " ms.");
+        
+        // Sanity check (Multi-threaded)
+        if (isSorted(arrayMultiThreaded)) {
+            System.out.println("Multithreaded Array is sorted.");
+        } else {
+            System.out.println("Multithreaded Array is not sorted.");
         }
 }
     /*
