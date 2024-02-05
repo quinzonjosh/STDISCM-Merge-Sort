@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,32 +35,58 @@ public class Main2 {
 
         // TODO: Call the generate_intervals method to generate the merge sequence
         List<Interval> intervals = generate_intervals(0, array.length - 1);
+        Set<Interval> done = new HashSet<>();
+//        for (Interval interval : intervals) {
+//            System.out.println(interval.getStart() + "," + interval.getEnd());
+//        }
 
-        // Call merge on each interval in sequence (single-threaded version)
-        long startTime = System.currentTimeMillis();
-        for (Interval interval : intervals) {
-            merge(array, interval.getStart(), interval.getEnd());
-        }
-        long endTime = System.currentTimeMillis();
-        long durationSingleThreaded = endTime - startTime;
-        System.out.println("Single-threaded merge sort took " + durationSingleThreaded + " ms.");
 
-        // TODO: Call merge on each interval in sequence
+        long startTime, endTime;
+
+//        // TODO: Call merge on each interval in sequence
         ExecutorService executor = Executors.newFixedThreadPool(nThreadCount);
         startTime = System.currentTimeMillis();
-            for (Interval interval : intervals) {
-                executor.submit(() -> merge(array, interval.getStart(), interval.getEnd()));
+
+        int counter = 0;
+        while (done.size() < intervals.size()){
+            if (counter >= intervals.size()){
+                counter = 0;
             }
-            executor.shutdown();
-            try {
-                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            else {
+                Interval temp = intervals.get(counter);
+
+                //divide the pair into two (start, mid) (mid + 1, end)
+                List<Interval> subIntervals = generate_intervals((int)temp.getStart(), (int)temp.getEnd());
+                subIntervals.remove(subIntervals.size() - 1);
+
+
+                if ((int) temp.getStart() == (int) temp.getEnd()){
+                    executor.submit(() -> merge(array, (int)temp.getStart(), (int)temp.getEnd()));
+                    done.add(temp);
+                }
+                else if (done.containsAll(subIntervals)){
+                    executor.submit(() -> merge(array, (int)temp.getStart(), (int)temp.getEnd()));
+                    done.add(temp);
+                }
+
+                counter++;
+
             }
+
+
+        }
+
+        executor.shutdown();
+        try {
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         endTime = System.currentTimeMillis();
         long durationConcurrent = endTime - startTime;
+
+//        System.out.println(" Sorted  array: " + Arrays.toString(array));
         System.out.println("Concurrent merge sort took " + durationConcurrent + " ms.");
-        
         // Sanity check
         if (isSorted(array)) {
             System.out.println("Array is sorted.");
@@ -71,6 +94,11 @@ public class Main2 {
             System.out.println("Array is not sorted.");
         }
 }
+
+
+
+
+
     /*
     This function generates all the intervals for merge sort iteratively, given 
     the range of indices to sort. Algorithm runs in O(n).
@@ -87,8 +115,8 @@ public class Main2 {
 
         int i = 0;
         while(i < frontier.size()){
-            int s = frontier.get(i).getStart();
-            int e = frontier.get(i).getEnd();
+            int s = (int) frontier.get(i).getStart();
+            int e = (int) frontier.get(i).getEnd();
 
             i++;
 
